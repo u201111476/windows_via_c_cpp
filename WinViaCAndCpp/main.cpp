@@ -4,6 +4,14 @@
 
 extern "C" const IMAGE_DOS_HEADER __ImageBase;			//这个变量的地址就是hInstance，也就是exe文件的加载地址
 
+DWORD WINAPI ThreadFunc(LPVOID lpParam)
+{
+	while (1)
+	{
+		Sleep(3000);
+	}
+}
+
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow)
 {
 	auto bAllocConsole = AllocConsole();		//一个进程只能由一个控制台
@@ -91,6 +99,10 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow
 	//{
 	//	Sleep(5000);
 	//}
+
+	CreateThread(NULL, NULL, ThreadFunc, NULL, 0, NULL);
 	FreeConsole();
+	//ExitThread(1);			//不调用ExitThread的话，主线程return了，会调用exit,先清理一些静态/全局的C++对象，然后调用ExitProcess,整个进程就会退出
+								//调用了ExitThread的话，由于不走C/C++运行时那套退出机制了，而Windows系统保证一个进程只有当所有线程退出了之后才会退出，所以上面创建的线程还会继续执行，进程不退出
 	return 0;
 }
