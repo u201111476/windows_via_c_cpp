@@ -167,8 +167,30 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_INITDIALOG:
-        return (INT_PTR)TRUE;
+    {
+        BOOL bInJob = FALSE;
+        IsProcessInJob(GetCurrentProcess(), NULL, &bInJob);
+        if (bInJob)
+            MessageBoxA(NULL, "This process is already in a job!", "Job", MB_OK);
+        STARTUPINFO si;
+        PROCESS_INFORMATION pi;
+        ZeroMemory(&si, sizeof(si));
+        ZeroMemory(&pi, sizeof(pi));
+        JOBOBJECT_EXTENDED_LIMIT_INFORMATION job_limits;
+        memset(&job_limits, 0, sizeof(job_limits));
+        job_limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_SILENT_BREAKAWAY_OK;
+        CreateProcess(L"SpawnChildNotInJob.exe", NULL, NULL, NULL, TRUE, NULL, NULL, NULL, &si, &pi);
+        HANDLE job = CreateJobObject(NULL, NULL);
+        SetInformationJobObject(job, JobObjectExtendedLimitInformation, &job_limits, sizeof(job_limits));
+        AssignProcessToJobObject(job, pi.hProcess);
+        ResumeThread(pi.hThread);
 
+        //CreateProcess(L"Console.exe", NULL, NULL, NULL, TRUE, NULL, NULL, NULL, &si, &pi);
+
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+        return (INT_PTR)TRUE;
+    }
     case WM_COMMAND:
         if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
         {

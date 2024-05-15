@@ -287,7 +287,30 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow
 	WriteConsole(hout, "CurrentDirectory:", strlen("CurrentDirectory:"), NULL, NULL);
 	WriteConsole(hout, buf, strlen(buf), NULL, NULL);
 	WriteConsole(hout, "\n", 2, NULL, NULL);
-	CreateProcess("token.exe", NULL, NULL, NULL, TRUE, 0, NULL, NULL, &si, &pi);
+	BOOL bInJob = FALSE;
+	IsProcessInJob(GetCurrentProcess(), NULL, &bInJob);
+	ZeroMemory(buf, 256);
+	if (bInJob)
+		sprintf_s(buf, 255, "This process is in a job already!\n");
+	else
+		sprintf_s(buf, 255, "This process is not in any job!\n");
+	WriteConsole(hout, buf, strlen(buf), NULL, NULL);
+	HANDLE job = CreateJobObject(NULL, NULL);
+	JOBOBJECT_EXTENDED_LIMIT_INFORMATION Limits;
+	memset(&Limits, 0, sizeof(Limits));
+	Limits.BasicLimitInformation.LimitFlags = JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE | JOB_OBJECT_LIMIT_PROCESS_TIME;
+	Limits.BasicLimitInformation.PerProcessUserTimeLimit.QuadPart = 100;			//用户模式下只能跑100个100纳秒
+	SetInformationJobObject(job, JobObjectExtendedLimitInformation, &Limits, sizeof(Limits));
+	//CreateProcess("token.exe", NULL, NULL, NULL, TRUE, NULL, NULL, NULL, &si, &pi);
+	//CloseHandle(pi.hProcess);
+	//CloseHandle(pi.hThread);
+
+	//现在好像每个进程(至少普通进程是这样的)都会属于一个job
+	CreateProcess("token.exe", NULL, NULL, NULL, TRUE,CREATE_SUSPENDED | CREATE_BREAKAWAY_FROM_JOB, NULL, NULL, &si, &pi);
+	AssignProcessToJobObject(job, pi.hProcess);
+	ResumeThread(pi.hThread);
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
 
 	char szCurDir[MAX_PATH];
 	DWORD cchLength= GetFullPathName(TEXT("E:"), MAX_PATH, szCurDir, NULL);			//可获取驱动器的当前工作路径
