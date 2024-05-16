@@ -160,6 +160,7 @@ void getResourceCounter()
 	//wstring strInterface = L"\\Network Interface(" + xugd::clib::XuStr::str2wstr(strGet) + L")\\";
 	//wcout << strInterface << endl;
 
+	//可查看计算机\HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Perflib\009
 	status = PdhAddCounter(query, TEXT("\\Processor Information(_Total)\\% Processor Utility"), NULL, &cpuCounter);			//对应任务管理器的CPU利用率
 	if (status != ERROR_SUCCESS)
 		cout << "Add CPU Counter Error" << endl;
@@ -349,7 +350,35 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow
 		ReadConsole(hin, buf, 256, &nRead, NULL);
 		if (strncmp(buf,"exit",4) == 0)
 			break;
+		if (strncmp(buf, "malloc", 6) == 0)
+		{
+			void* p = malloc(1024 * 1024);
+		}
+		if (strncmp(buf, "new", 3) == 0)
+		{
+			void* p1 = new char[1024 * 1024];
+		}
+		if (strncmp(buf, "HeapAlloc", 9) == 0)
+		{
+			if (strncmp(buf, "HeapAlloc0", 10) == 0)
+			{
+				void* p2 = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 1024 * 1024);
+			}
+			else
+				void* p3 = HeapAlloc(GetProcessHeap(), 0, 1024 * 1024);
+		}
+		if (strncmp(buf, "VirtualAlloc", strlen("VirtualAlloc")) == 0)
+		{
+			void* p4{ nullptr };
+			if (strncmp(buf, "VirtualAllocCommit", strlen("VirtualAllocCommit")) == 0)
+				VirtualAlloc((LPVOID)p4, 1024 * 1024, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+			else
+				VirtualAlloc((LPVOID)p4, 1024 * 1024, MEM_RESERVE, PAGE_READWRITE);
+			int i = 1;
+		}
 	}
 	FreeConsole();
+	TerminateJobObject(job, 0);
+	CloseHandle(job);
 	return 0;
 }
