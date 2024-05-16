@@ -353,10 +353,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR lpCmdLine, int nCmdShow
 		if (strncmp(buf, "malloc", 6) == 0)
 		{
 			void* p = malloc(1024 * 1024);
+			if (strncmp(buf, "mallocthenfree", strlen("mallocthenfree")) == 0)
+				free(p);
 		}
 		if (strncmp(buf, "new", 3) == 0)
 		{
 			void* p1 = new char[1024 * 1024];
+			if (strncmp(buf, "newthendelete", strlen("newthendelete")) == 0)
+				delete[] p1;
 		}
 		if (strncmp(buf, "HeapAlloc", 9) == 0)
 		{
